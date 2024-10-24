@@ -2,7 +2,9 @@
 """
 exercise.py
 """
-import redis
+from redis import Redis
+from uuid import uuid4
+from typing import Union
 
 
 class Cache:
@@ -13,5 +15,16 @@ class Cache:
         Initialise a  Cache class by connecting to redis and,
         remove all data in the connected database.
         """
-        self._redis = redis.Redis()
+        self._redis = Redis()
         self._redis.flushdb()
+
+    def store(self, data: Union[str, bytes, int, float]) -> str:
+        """
+        Store in redis db data using uuid4 str as key.
+
+        :param data - Data to be stored in redis database.
+        :rtype - The key of the data stored in databse.
+        """
+        key: str = str(uuid4())
+        self._redis.set(key, data)
+        return key
