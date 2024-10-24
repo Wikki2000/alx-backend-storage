@@ -4,7 +4,7 @@ exercise.py
 """
 import redis
 from uuid import uuid4
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 
 class Cache:
