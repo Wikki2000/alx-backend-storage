@@ -2,7 +2,7 @@
 """
 exercise.py
 """
-from redis import Redis
+import redis
 from uuid import uuid4
 from typing import Union
 
@@ -15,7 +15,7 @@ class Cache:
         Initialise a  Cache class by connecting to redis and,
         remove all data in the connected database.
         """
-        self._redis = Redis()
+        self._redis = redis.Redis()
         self._redis.flushdb()
 
     def store(self, data: Union[str, bytes, int, float]) -> str:
