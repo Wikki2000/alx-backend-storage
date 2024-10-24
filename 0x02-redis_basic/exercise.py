@@ -4,7 +4,7 @@ exercise.py
 """
 import redis
 from uuid import uuid4
-from typing import Union
+from typing import Union, Callable
 
 
 class Cache:
@@ -28,3 +28,39 @@ class Cache:
         key: str = str(uuid4())
         self._redis.set(key, data)
         return key
+
+    def get(
+        self, key: str, fn: Optional[Callable] = None
+    ) -> Union[str, bytes, int, float]:
+        """
+        Retrieve data from redis database and convert to require type,
+        if the optional function is given.
+
+        :param key - The key use to retrieve data in redis database.
+        :param fn - The optional function use convert bytes data to any type.
+        :rtype - The retrieved data from database, convert if fn is provided.
+        """
+        data: Union[bytes, None] = self._redis.get(key)
+        if fn:
+            return fn(data)
+        return data
+
+    def get_str(self, key: str) -> str:
+        """
+        Retrieve data from redis db and convert to str.
+
+        :param key - The key use to retrieved the data.
+        :rtype - The string value of retrieved data.
+        """
+        data: Union[bytes, None] = self._redis.get(key)
+        return data.decode('utf-8')
+
+    def get_int(self, key: str) -> int:
+        """
+        Retrieve data from redis db and convert to integer.
+
+        :param key - The key use to retrieved the data.
+        :rtype - The string value of retrieved data.
+        """
+        data: Optional[bytes] = self._redis.get(key)
+        return int(data)
