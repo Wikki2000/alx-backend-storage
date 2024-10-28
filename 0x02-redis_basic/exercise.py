@@ -17,10 +17,10 @@ def replay(method: Callable) -> None:
     r = redis.Redis()
     name = method.__qualname__
     input_list = r.lrange(f"{name}:inputs", 0, -1)
-    output_list =  r.lrange(f"{name}:outputs", 0, -1)
+    output_list = r.lrange(f"{name}:outputs", 0, -1)
     print(f"{name} was called {len(input_list)} times:")
-    for item in zip(input_list, output_list):
-        print(f"{name}(*('{item}',)) -> {item}")
+    for item1, item2 in zip(input_list, output_list):
+        print(f"{name}(*('{item1.decode('utf-8')}',)) -> {item2.decode('utf-8')}")
 
 
 def count_calls(method: Callable) -> Callable:
