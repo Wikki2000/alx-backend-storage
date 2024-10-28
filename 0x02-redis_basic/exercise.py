@@ -5,7 +5,22 @@ exercise.py
 import redis
 from uuid import uuid4
 from typing import Union, Callable, Optional, Any
-from functools import wraps
+import functools
+
+
+def replay(method: Callable) -> None:
+    """
+    Prints the history of calls to the function.
+
+    :method - The method whoose call history is to be display.
+    """
+    r = redis.Redis()
+    name = method.__qualname__
+    input_list = r.lrange(f"{name}:inputs", 0, -1)
+    output_list =  r.lrange(f"{name}:outputs", 0, -1)
+    print(f"{name} was called {len(input_list)} times:")
+    for item in zip(input_list, output_list):
+        print(f"{name}(*('{item}',)) -> {item}")
 
 
 def count_calls(method: Callable) -> Callable:
@@ -16,7 +31,7 @@ def count_calls(method: Callable) -> Callable:
 
     :rtype - The wrapper/inner function.
     """
-    @wraps(method)
+    @functools.wraps(method)
     def wrapper(self, *args, **kwargs) -> Any:
         """
         Increment count of times a method is called.
@@ -27,11 +42,46 @@ def count_calls(method: Callable) -> Callable:
 
         :rtype - The return of the method to be decoreated.
         """
-        # Increment the call count in Redis
-        self._redis.incr(method.__qualname__)
+        # Ensure that this is call only when decorator apply to cache class.
+        # This prevent error if apply on a class method without self._redis.
+        if isinstance(self, Cache) and isinstance(self._redis, redis.Redis):
+
+            # Increment the call count in redis.
+            self._redis.incr(method.__qualname__)
 
         # Call the original method and return its result
         result = method(self, *args, **kwargs)
+        return result
+    return wrapper
+
+
+def call_history(method: Callable) -> Callable:
+    """
+    Keep function call history by cahing it's inputs and output in redis.
+
+    :method - The method to keep track of it call history.
+    :rtype - The The wrapper/inner function.
+    """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs) -> Any:
+        """
+        Cache inputs and output of a method in redis.
+
+        :self - Instance of the class.
+        :args - The arguements to be pass to the method.
+        :kwargs - The key word arguement to be pass to the method.
+
+        :rtype - The return of the method to be decoreated.
+        """
+        input_list = method.__qualname__ + ":inputs"
+        output_list = method.__qualname__ + ":outputs"
+
+        result = method(self, *args, **kwargs)
+
+        if isinstance(self, Cache) and isinstance(self._redis, redis.Redis):
+            self._redis.rpush(input_list, str(args))
+            self._redis.rpush(output_list, result)
+
         return result
     return wrapper
 
@@ -47,6 +97,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
