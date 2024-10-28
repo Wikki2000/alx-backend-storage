@@ -20,7 +20,10 @@ def replay(method: Callable) -> None:
     output_list = r.lrange(f"{name}:outputs", 0, -1)
     print(f"{name} was called {len(input_list)} times:")
     for item1, item2 in zip(input_list, output_list):
-        print(f"{name}(*('{item1.decode('utf-8')}',)) -> {item2.decode('utf-8')}")
+        print(
+            f"{name}(*('{item1.decode('utf-8')}',))" +
+            f"-> {item2.decode('utf-8')}"
+        )
 
 
 def count_calls(method: Callable) -> Callable:
