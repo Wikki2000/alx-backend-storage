@@ -4,7 +4,36 @@ exercise.py
 """
 import redis
 from uuid import uuid4
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Any
+from functools import wraps
+
+
+def count_calls(method: Callable) -> Callable:
+    """
+    Count the number of time a method is called.
+
+    :method - The method which numbers of calls is counted.
+
+    :rtype - The wrapper/inner function.
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs) -> Any:
+        """
+        Increment count of times a method is called.
+
+        :self - Instance of the class
+        :args - The arguements to be pass to the method.
+        :kwargs - The key word arguement to be pass to the method
+
+        :rtype - The return of the method to be decoreated.
+        """
+        # Increment the call count in Redis
+        self._redis.incr(method.__qualname__)
+
+        # Call the original method and return its result
+        result = method(self, *args, **kwargs)
+        return result
+    return wrapper
 
 
 class Cache:
@@ -18,6 +47,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Store in redis db data using uuid4 str as key.
