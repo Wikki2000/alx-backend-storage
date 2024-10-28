@@ -28,7 +28,8 @@ def count_calls(method: Callable) -> Callable:
         :rtype - The return of the method to be decoreated.
         """
         # Increment the call count in Redis
-        self._redis.incr(method.__qualname__)
+        if isinstance(self, Cache):
+            self._redis.incr(method.__qualname__)
 
         # Call the original method and return its result
         result = method(self, *args, **kwargs)
