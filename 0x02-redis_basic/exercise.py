@@ -34,7 +34,7 @@ def count_calls(method: Callable) -> Callable:
     :rtype - The wrapper/inner function.
     """
     @functools.wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self, data) -> Any:
         """
         Increment count of times a method is called.
 
@@ -52,7 +52,7 @@ def count_calls(method: Callable) -> Callable:
             self._redis.incr(method.__qualname__)
 
         # Call the original method and return its result
-        result = method(self, *args, **kwargs)
+        result = method(self, data)
         return result
     return wrapper
 
@@ -65,7 +65,7 @@ def call_history(method: Callable) -> Callable:
     :rtype - The The wrapper/inner function.
     """
     @functools.wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self, data) -> Any:
         """
         Cache inputs and output of a method in redis.
 
@@ -78,10 +78,10 @@ def call_history(method: Callable) -> Callable:
         input_list = method.__qualname__ + ":inputs"
         output_list = method.__qualname__ + ":outputs"
 
-        result = method(self, *args, **kwargs)
+        result = method(self, data)
 
         if isinstance(self, Cache) and isinstance(self._redis, redis.Redis):
-            self._redis.rpush(input_list, str(args))
+            self._redis.rpush(input_list, str(data))
             self._redis.rpush(output_list, result)
 
         return result
