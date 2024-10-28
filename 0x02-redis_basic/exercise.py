@@ -12,18 +12,17 @@ def replay(method: Callable) -> None:
     """
     Prints the history of calls to the function.
 
-    :method - The method whoose call history is to be display.
+    Parameters:
+        method: The function to print the hostory of.
     """
-    r = redis.Redis()
     name = method.__qualname__
-    input_list = r.lrange(f"{name}:inputs", 0, -1)
-    output_list = r.lrange(f"{name}:outputs", 0, -1)
-    print(f"{name} was called {len(input_list)} times:")
-    for item1, item2 in zip(input_list, output_list):
-        print(
-            f"{name}(*('{item1.decode('utf-8')}',))" +
-            f" -> {item2.decode('utf-8')}"
-        )
+    client = redis.Redis()
+    inputs = client.lrange("{}:inputs".format(name), 0, -1)
+    outputs = client.lrange("{}:outputs".format(name), 0, -1)
+    print('{} was called {} times:'.format(name, len(inputs)))
+    for input, output in zip(inputs, outputs):
+        print("{}(*{}) -> {}".format(name, input.decode("utf-8"),
+                                     output.decode("utf-8")))
 
 
 def count_calls(method: Callable) -> Callable:
