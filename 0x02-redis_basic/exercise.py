@@ -22,7 +22,7 @@ def replay(method: Callable) -> None:
     for item1, item2 in zip(input_list, output_list):
         print(
             f"{name}(*('{item1.decode('utf-8')}',))" +
-            f"-> {item2.decode('utf-8')}"
+            f" -> {item2.decode('utf-8')}"
         )
 
 
